@@ -20,17 +20,27 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Inject Build Commit Hash
+      - name: Set release metadata & inject build hash
         id: meta
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           sed -i "s/^BUILD = .*/BUILD = \"${SHORT_SHA}\"/" scripts/config/constants.py
           echo "sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+            echo "is_dev=false" >> $GITHUB_OUTPUT
+            echo "title=XTools ${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
           else
-            echo "tag=v0.0.1-${SHORT_SHA}" >> $GITHUB_OUTPUT
+            echo "tag=dev" >> $GITHUB_OUTPUT
+            echo "is_dev=true" >> $GITHUB_OUTPUT
+            echo "title=XTools Dev (Rolling)" >> $GITHUB_OUTPUT
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -f dev HEAD
+            git push -f origin refs/tags/dev
           fi
 
       - name: Package xtools.zip
@@ -46,10 +56,13 @@ jobs:
           cd ..
           sha256sum xtools.zip > xtools.zip.sha256
 
-      - name: Create GitHub Release
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.title }}
+          prerelease: ${{ steps.meta.outputs.is_dev == 'true' }}
+          make_latest: ${{ steps.meta.outputs.is_dev == 'false' }}
           files: |
             xtools.zip
             xtools.zip.sha256

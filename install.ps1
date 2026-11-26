@@ -17,7 +17,7 @@ $InstallDir  = Join-Path $env:LOCALAPPDATA 'XTools'
 $BinDir      = Join-Path $InstallDir 'bin'
 $TempDir     = Join-Path $env:TEMP ('xtools-install-' + [guid]::NewGuid().ToString('N'))
 $ZipPath     = Join-Path $TempDir 'xtools.zip'
-$ApiUrl      = "https://api.github.com/repos/$Repo/releases/latest"
+$ApiUrl      = if ($env:XTOOLS_CHANNEL -eq 'dev') { "https://api.github.com/repos/$Repo/releases/tags/dev" } else { "https://api.github.com/repos/$Repo/releases/latest" }
 
 # ANSI escape helper
 $ESC   = [char]27
