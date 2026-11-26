@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     XTools Auto-Deploy Script — Commit, Push main & Trigger GitHub Release
 #>
