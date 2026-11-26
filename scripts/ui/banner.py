@@ -65,13 +65,15 @@ def get_build_id() -> str:
 
 def get_subtitle_line() -> str:
     """เรนเดอร์แท็กสถานะระบบและผู้สร้าง"""
+    build_id = get_build_id()
+    current_ver = f"v{VERSION}-{build_id}"
     update_badge = (
-        f"  {YELLOW}{t('update_badge').format(ver=_latest_version)}{RESET}"
+        f"  {YELLOW}{t('update_badge').format(old=current_ver, new=f'v{_latest_version}')}{RESET}"
         if _latest_version
         else ""
     )
     return (
-        f"  {CYAN}XTools Hub v{VERSION} {DIM}({get_build_id()}){RESET} {DIM}|{RESET} "
+        f"  {CYAN}XTools Hub v{VERSION} {DIM}({build_id}){RESET} {DIM}|{RESET} "
         f"{RED}{BOLD}ZXD44{RESET}{DIM}/XTools{RESET} {DIM}|{RESET} "
         f"{BLUE}Python {sys.version.split()[0]}{RESET}{update_badge}\n"
     )
@@ -158,12 +160,18 @@ def wave_input(prompt: str) -> str:
 
     def _wave_worker() -> None:
         global _wave_phase
+        last_ver = _latest_version
         while not stop_event.is_set():
             frame = render_wave_frame(_wave_phase)
+            curr_ver = _latest_version
+            sub_patch = ""
+            if curr_ver != last_ver:
+                last_ver = curr_ver
+                sub_patch = f"\033[6;1H\033[2K{get_subtitle_line().rstrip(chr(10))}"
             with _render_lock:
                 if stop_event.is_set():
                     break
-                sys.stdout.write(f"\033[s\033[?25l\033[1;1H{frame}\033[u\033[?25h")
+                sys.stdout.write(f"\033[s\033[?25l\033[1;1H{frame}{sub_patch}\033[u\033[?25h")
                 sys.stdout.flush()
             _wave_phase += 0.26
             stop_event.wait(0.055)
