@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     XTools Windows Bootstrapper (install.ps1)
     ตัวติดตั้งและอัปเดต XTools สำหรับ Windows (ภาษาไทย + Bento Box UI)
@@ -77,15 +77,16 @@ try {
     $headers = @{ 'User-Agent' = 'XTools-Installer' }
     $release = Invoke-RestMethod -Uri $ApiUrl -Headers $headers -UseBasicParsing
     $rawTag = $release.tag_name
-    $shortSha = if ($release.target_commitish -and $release.target_commitish.Length -ge 7) {
+    $shortSha = if ($release.target_commitish -match '^[0-9a-fA-F]{7,40}$') {
         $release.target_commitish.Substring(0, 7)
-    } else { "" }
-    $baseVer = if ($rawTag -eq 'dev') { if ($vMatch) { "v$vMatch" } else { "v0.0.2" } } else { $rawTag }
-    $newVer = if ($shortSha) {
-        "★ $baseVer · main ($shortSha) [NEW]"
     } else {
-        "★ $baseVer · main [NEW]"
+        try {
+            $cInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/commits/main" -Headers $headers -UseBasicParsing
+            $cInfo.sha.Substring(0, 7)
+        } catch { "" }
     }
+    $baseVer = if ($rawTag -eq 'dev') { if ($vMatch) { "v$vMatch" } else { "v0.0.2" } } else { $rawTag }
+    $newVer = if ($shortSha) { "$baseVer ($shortSha)" } else { $baseVer }
 
     if (Test-Path $InstallDir) {
         Write-Host ""
@@ -149,6 +150,13 @@ try {
     Expand-Archive -Path $ZipPath -DestinationPath $StageDir -Force
     if (-not (Test-Path $InstallDir)) {
         New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+    }
+    # Windows ล็อก .exe ที่กำลังรันอยู่ แต่ยอมให้ Move/Rename ได้
+    $runningExe = Join-Path $BinDir 'xtools.exe'
+    $oldExe = Join-Path $BinDir 'xtools.exe.old'
+    if (Test-Path $oldExe) { Remove-Item -Path $oldExe -Force -ErrorAction SilentlyContinue }
+    if (Test-Path $runningExe) {
+        Move-Item -Path $runningExe -Destination $oldExe -Force -ErrorAction SilentlyContinue
     }
     Copy-Item -Path (Join-Path $StageDir '*') -Destination $InstallDir -Recurse -Force
 
