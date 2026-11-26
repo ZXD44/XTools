@@ -38,3 +38,10 @@ dist_pkg/
 # Build artifacts ของเครื่องมือใน scripts/dev (อย่า commit binary)
 scripts/dev/prompt-lite/prompt-lite.exe
 scripts/dev/*/target/
+
+# Rust ports (rust-anything): เก็บ source/cases แต่ไม่เก็บ build output
+rust/*/target/
+rust/*/python/**/*.pyd
+rust/*/python/**/*.so
+rust/*/python/**/*.dylib
+.tmp/

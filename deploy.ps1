@@ -16,7 +16,7 @@ Set-Location $PSScriptRoot
 # ต้องใช้ -A เพื่อเก็บ "ไฟล์ใหม่" ด้วย (เช่น scripts/dev/<tool> ที่เพิ่งสร้าง)
 # เดิมใช้ git add -u ซึ่งข้าม untracked files ทำให้ tool ใหม่ไม่ถูก deploy
 # ถ้าไม่มีไฟล์ใน pathspec ให้ข้ามไปไม่ให้ git ล้ม
-foreach ($p in @('scripts', 'bin', 'assets', 'docs', '.github', '.agent', 'README.md', 'install.ps1', 'install.sh', 'deploy.ps1')) {
+foreach ($p in @('scripts', 'bin', 'assets', 'docs', 'rust', '.github', '.agent', 'README.md', 'install.ps1', 'install.sh', 'deploy.ps1')) {
     if (Test-Path $p) { git add -A -- $p }
 }
 
