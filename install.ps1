@@ -1,107 +1,124 @@
-<#
+﻿<#
 .SYNOPSIS
     XTools Windows Bootstrapper (install.ps1)
-.DESCRIPTION
-    Downloads the latest XTools release from GitHub Releases, verifies its SHA256
-    checksum, extracts to $env:LOCALAPPDATA\Xtools, adds Xtools\bin to User PATH,
-    and creates a Desktop shortcut.
+    ตัวติดตั้งและอัปเดต XTools สำหรับ Windows (ภาษาไทย + Bento Box UI)
 #>
 
 $ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # ==============================================================================
-# 1. Configuration
+# 1. การตั้งค่าหลัก
 # ==============================================================================
 $Repo        = if ($env:XTOOLS_REPO) { $env:XTOOLS_REPO } else { 'ZXD44/XTools' }
 $InstallDir  = Join-Path $env:LOCALAPPDATA 'XTools'
 $BinDir      = Join-Path $InstallDir 'bin'
 $TempDir     = Join-Path $env:TEMP ('xtools-install-' + [guid]::NewGuid().ToString('N'))
 $ZipPath     = Join-Path $TempDir 'xtools.zip'
-$ApiUrl      = if ($env:XTOOLS_CHANNEL -eq 'dev') { "https://api.github.com/repos/$Repo/releases/tags/dev" } else { "https://api.github.com/repos/$Repo/releases/latest" }
+$ApiUrl      = if ($env:XTOOLS_CHANNEL -eq 'dev') {
+    "https://api.github.com/repos/$Repo/releases/tags/dev"
+} else {
+    "https://api.github.com/repos/$Repo/releases/latest"
+}
 
-# ANSI escape helper
-$ESC   = [char]27
-$CYAN  = "$ESC[96m"
-$GREEN = "$ESC[92m"
-$YELLOW= "$ESC[93m"
-$RED   = "$ESC[91m"
-$DIM   = "$ESC[90m"
-$RESET = "$ESC[0m"
-
-# ==============================================================================
-# 2. Banner
-# ==============================================================================
-Write-Host @"
-$CYAN
- __  _______ ___   ___  _     ____  
- \ \/ /_   _/ _ \ / _ \| |   / ___| 
-  \  /  | || | | | | | | |   \___ \ 
-  /  \  | || |_| | |_| | |___ ___) |
- /_/\_\ |_| \___/ \___/|_____|____/ 
-$RESET
-$DIM  Windows Installer | Repo: $Repo$RESET
-"@
+$ESC    = [char]27
+$CYAN   = "$ESC[96m"
+$BLUE   = "$ESC[94m"
+$GREEN  = "$ESC[92m"
+$YELLOW = "$ESC[93m"
+$RED    = "$ESC[91m"
+$DIM    = "$ESC[90m"
+$BOLD   = "$ESC[1m"
+$RESET  = "$ESC[0m"
 
 # ==============================================================================
-# 3. Idempotency Check (Existing Installation)
+# 2. แบนเนอร์คลื่นน้ำ (Water Wave Gradient Banner)
 # ==============================================================================
-if (Test-Path $InstallDir) {
-    Write-Host "${YELLOW}[!] XTools is already installed at: $InstallDir${RESET}"
-    $choice = Read-Host "    Overwrite/Update existing installation? [y/N]"
-    if ($choice -notmatch '^[Yy]$') {
-        Write-Host "${DIM}Installation cancelled by user.${RESET}"
-        exit 0
+$ArtLines = @(
+    " __  _______ ___   ___  _     ____  ",
+    " \ \/ /_   _/ _ \ / _ \| |   / ___| ",
+    "  \  /  | || | | | | | | |   \___ \ ",
+    "  /  \  | || |_| | |_| | |___ ___) |",
+    " /_/\_\ |_| \___/ \___/|_____|____/ "
+)
+Write-Host ""
+for ($r = 0; $r -lt $ArtLines.Count; $r++) {
+    $line = $ArtLines[$r]
+    $out = ""
+    for ($c = 0; $c -lt $line.Length; $c++) {
+        $ch = $line[$c]
+        if ($ch -eq ' ') { $out += ' '; continue }
+        $v = ([Math]::Sin($c * 0.22 + $r * 0.65) + 1.0) * 0.5
+        $cr = [Math]::Pow($v, 2.2)
+        $Rcol = [Math]::Min(255, [int](10 + $cr * 200))
+        $Gcol = [Math]::Min(255, [int](90 + $v * 150))
+        $Bcol = [Math]::Min(255, [int](180 + $v * 75))
+        $out += "$ESC[38;2;${Rcol};${Gcol};${Bcol}m${BOLD}${ch}"
     }
+    Write-Host "${out}${RESET}"
 }
+Write-Host "  ${CYAN}XTools ตัวติดตั้ง Windows${RESET} ${DIM}|${RESET} ${RED}${BOLD}ZXD44${RESET}${DIM}/XTools${RESET}`n"
 
 # ==============================================================================
-# 4. Runtime Check (Python / Rust)
+# 3. ตรวจสอบเวอร์ชันปัจจุบัน & ดึงเวอร์ชันใหม่จาก GitHub
 # ==============================================================================
-$hasPython = $false
-try {
-    $pyVer = & python --version 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        $hasPython = $true
-        Write-Host "${GREEN}[OK]${RESET} Detected $pyVer"
-    }
-} catch {
-    $hasPython = $false
+$localVer = "ยังไม่ได้ติดตั้ง"
+$constFile = Join-Path $InstallDir 'scripts\config\constants.py'
+if (Test-Path $constFile) {
+    $rawConst = Get-Content $constFile -Raw -ErrorAction SilentlyContinue
+    $vMatch = if ($rawConst -match 'VERSION\s*=\s*"([^"]+)"') { $Matches[1] } else { "0.0.1" }
+    $bMatch = if ($rawConst -match 'BUILD\s*=\s*"([^"]+)"') { $Matches[1] } else { "" }
+    $localVer = if ($bMatch) { "v$vMatch-$bMatch" } else { "v$vMatch" }
 }
-
-if (-not $hasPython) {
-    Write-Host "${YELLOW}[!] Python not found in PATH.${RESET}"
-    Write-Host "    Python scripts require Python 3.x: https://www.python.org/downloads/"
-    Write-Host "    (Compiled Rust .exe tools in the release will still work without Python.)"
-}
-
-# ==============================================================================
-# 5. Fetch Latest Release Metadata & Download
-# ==============================================================================
-New-Item -ItemType Directory -Path $TempDir -Force | Out-Null
 
 try {
-    Write-Host "${CYAN}[1/4]${RESET} Fetching release metadata from: $ApiUrl"
-    $release = Invoke-RestMethod -Uri $ApiUrl -Headers @{ 'User-Agent' = 'XTools-Installer' }
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Write-Host "${CYAN}[1/4]${RESET} กำลังตรวจสอบเวอร์ชันล่าสุดจาก GitHub..."
+    $headers = @{ 'User-Agent' = 'XTools-Installer' }
+    $release = Invoke-RestMethod -Uri $ApiUrl -Headers $headers -UseBasicParsing
+    $newVer = $release.tag_name
 
+    if (Test-Path $InstallDir) {
+        Write-Host ""
+        Write-Host "${BOLD}┌── [ ตรวจพบการติดตั้งเดิม ] ────────────────────────────┐${RESET}"
+        Write-Host "│  ${DIM}ตำแหน่งติดตั้ง :${RESET} $InstallDir"
+        Write-Host "│  ${YELLOW}เวอร์ชันเดิม   :${RESET} $localVer"
+        Write-Host "│  ${GREEN}เวอร์ชันใหม่   :${RESET} ${BOLD}$newVer${RESET}"
+        Write-Host "${BOLD}└─────────────────────────────────────────────────────────┘${RESET}"
+        $choice = Read-Host "  ต้องการอัปเดตเป็นเวอร์ชันใหม่หรือไม่? [y/N]"
+        if ($choice -notmatch '^[Yy]$') {
+            Write-Host "${DIM}  ยกเลิกการอัปเดตเรียบร้อย${RESET}"
+            exit 0
+        }
+    }
+
+    # ==========================================================================
+    # 4. ตรวจสอบ Runtime (Python)
+    # ==========================================================================
+    $pyCmd = Get-Command python -ErrorAction SilentlyContinue
+    if ($pyCmd) {
+        $pyVer = (& python --version 2>&1) -join ' '
+        Write-Host "${GREEN}[OK]${RESET} ตรวจพบ $pyVer"
+    } else {
+        Write-Host "${YELLOW}[!] ไม่พบ Python ใน PATH (จำเป็นสำหรับรัน Hub)${RESET}"
+    }
+
+    # ==========================================================================
+    # 5. ดาวน์โหลดและตรวจสอบ SHA256
+    # ==========================================================================
     $zipAsset = $release.assets | Where-Object { $_.name -eq 'xtools.zip' } | Select-Object -First 1
     if (-not $zipAsset) {
-        throw "Asset 'xtools.zip' not found in latest release ($($release.tag_name))."
+        throw "ไม่พบไฟล์ 'xtools.zip' ใน Release ($newVer)"
     }
 
-    $shaAsset = $release.assets | Where-Object { $_.name -eq 'xtools.zip.sha256' } | Select-Object -First 1
+    New-Item -ItemType Directory -Path $TempDir -Force | Out-Null
+    Write-Host "${CYAN}[2/4]${RESET} กำลังดาวน์โหลด ${BOLD}$newVer${RESET}..."
+    Invoke-WebRequest -Uri $zipAsset.browser_download_url -OutFile $ZipPath -Headers $headers -UseBasicParsing
 
-    Write-Host "${CYAN}[2/4]${RESET} Downloading from: $($zipAsset.browser_download_url)"
-    $ProgressPreference = 'Continue'
-    Invoke-WebRequest -Uri $zipAsset.browser_download_url -OutFile $ZipPath -UseBasicParsing
-
-    # ==========================================================================
-    # 6. SHA256 Checksum Verification
-    # ==========================================================================
     $actualHash = (Get-FileHash -Path $ZipPath -Algorithm SHA256).Hash.ToLower()
     $expectedHash = $null
-
+    $shaAsset = $release.assets | Where-Object { $_.name -eq 'xtools.zip.sha256' } | Select-Object -First 1
     if ($shaAsset) {
-        Write-Host "${DIM}    Verifying against $($shaAsset.browser_download_url)...${RESET}"
         $shaContent = (Invoke-RestMethod -Uri $shaAsset.browser_download_url -UseBasicParsing).Trim()
         $expectedHash = ($shaContent -split '\s+')[0].ToLower()
     } elseif ($release.body -match '([a-fA-F0-9]{64})') {
@@ -110,17 +127,15 @@ try {
 
     if ($expectedHash) {
         if ($actualHash -ne $expectedHash) {
-            throw "SHA256 mismatch! Expected: $expectedHash, Got: $actualHash. Aborting."
+            throw "SHA256 ไม่ตรงกัน! (คาดหวัง: $expectedHash, ได้รับ: $actualHash)"
         }
-        Write-Host "${GREEN}[OK]${RESET} SHA256 verified ($actualHash)"
-    } else {
-        Write-Host "${YELLOW}[!] No SHA256 checksum found in release. File hash: $actualHash${RESET}"
+        Write-Host "${GREEN}[OK]${RESET} ตรวจสอบ SHA256 ผ่าน ($($actualHash.Substring(0,16))...)"
     }
 
     # ==========================================================================
-    # 7. Extract to $env:LOCALAPPDATA\Xtools
+    # 6. แตกไฟล์และอัปเดตทับอย่างปลอดภัย
     # ==========================================================================
-    Write-Host "${CYAN}[3/4]${RESET} Extracting to: $InstallDir"
+    Write-Host "${CYAN}[3/4]${RESET} กำลังติดตั้งไปยัง: $InstallDir"
     $StageDir = Join-Path $TempDir 'stage'
     Expand-Archive -Path $ZipPath -DestinationPath $StageDir -Force
     if (-not (Test-Path $InstallDir)) {
@@ -129,56 +144,46 @@ try {
     Copy-Item -Path (Join-Path $StageDir '*') -Destination $InstallDir -Recurse -Force
 
     # ==========================================================================
-    # 8. Add Xtools\bin to User PATH (No Admin Required)
+    # 7. อัปเดต User PATH & Desktop Shortcut
     # ==========================================================================
-    Write-Host "${CYAN}[4/4]${RESET} Updating User PATH..."
+    Write-Host "${CYAN}[4/4]${RESET} กำลังอัปเดต User PATH และทางลัด..."
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
     $pathEntries = if ($userPath) { $userPath -split ';' | Where-Object { $_ -ne '' } } else { @() }
     if ($pathEntries -notcontains $BinDir) {
-        $newPath = ($pathEntries + $BinDir) -join ';'
-        [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+        [Environment]::SetEnvironmentVariable('Path', (($pathEntries + $BinDir) -join ';'), 'User')
         $env:Path = "$env:Path;$BinDir"
-        Write-Host "${GREEN}[OK]${RESET} Added $BinDir to User PATH"
-    } else {
-        Write-Host "${DIM}    $BinDir is already in User PATH.${RESET}"
+        Write-Host "${GREEN}[OK]${RESET} เพิ่ม $BinDir ลงใน User PATH แล้ว"
     }
 
-    # ==========================================================================
-    # 9. Create Desktop Shortcut (.lnk)
-    # ==========================================================================
     $mainBat = Get-ChildItem -Path $InstallDir -Filter '*.bat' -Recurse | Select-Object -First 1
     $iconFile = Join-Path $InstallDir 'assets\xtools.ico'
     if ($mainBat) {
-        $desktopPath = [Environment]::GetFolderPath('Desktop')
-        $shortcutPath = Join-Path $desktopPath 'XTools.lnk'
+        $shortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'XTools.lnk'
         $wsh = New-Object -ComObject WScript.Shell
         $shortcut = $wsh.CreateShortcut($shortcutPath)
         $shortcut.TargetPath = $mainBat.FullName
         $shortcut.WorkingDirectory = $InstallDir
-        if (Test-Path $iconFile) {
-            $shortcut.IconLocation = $iconFile
-        }
+        if (Test-Path $iconFile) { $shortcut.IconLocation = $iconFile }
         $shortcut.Save()
-        Write-Host "${GREEN}[OK]${RESET} Desktop shortcut created: $shortcutPath"
     }
 
-    Write-Host "`n${GREEN}========================================${RESET}"
-    Write-Host "${GREEN}  XTools installed successfully!${RESET}"
-    Write-Host "${GREEN}  Location: $InstallDir${RESET}"
-    Write-Host "${GREEN}========================================${RESET}`n"
+    Write-Host ""
+    Write-Host "${GREEN}${BOLD}┌── [ ติดตั้ง / อัปเดต XTools สำเร็จ ] ───────────────────┐${RESET}"
+    Write-Host "${GREEN}│${RESET}  เวอร์ชัน : ${BOLD}$newVer${RESET}"
+    Write-Host "${GREEN}│${RESET}  ตำแหน่ง  : $InstallDir"
+    Write-Host "${GREEN}│${RESET}  คำสั่ง   : พิมพ์ ${CYAN}xtools${RESET} เพื่อเปิดใช้งาน"
+    Write-Host "${GREEN}${BOLD}└─────────────────────────────────────────────────────────┘${RESET}`n"
 }
 catch [System.Net.WebException] {
-    Write-Host "${RED}[ERROR] Network/Download failed: $($_.Exception.Message)${RESET}"
-    Write-Host "Check your internet connection and verify repo '$Repo' has a published release."
+    Write-Host "${RED}[ผิดพลาด] ดาวน์โหลดไม่สำเร็จ: $($_.Exception.Message)${RESET}"
     exit 1
 }
 catch [System.UnauthorizedAccessException] {
-    Write-Host "${RED}[ERROR] Permission denied: $($_.Exception.Message)${RESET}"
-    Write-Host "Ensure you have write access to $InstallDir."
+    Write-Host "${RED}[ผิดพลาด] ไม่มีสิทธิ์เขียนไฟล์ที่ $InstallDir${RESET}"
     exit 1
 }
 catch {
-    Write-Host "${RED}[ERROR] $($_.Exception.Message)${RESET}"
+    Write-Host "${RED}[ผิดพลาด] $($_.Exception.Message)${RESET}"
     exit 1
 }
 finally {
