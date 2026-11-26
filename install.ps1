@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     XTools Windows Bootstrapper (install.ps1)
     ตัวติดตั้งและอัปเดต XTools สำหรับ Windows (ภาษาไทย + Bento Box UI)
@@ -68,7 +68,7 @@ if (Test-Path $constFile) {
     $rawConst = Get-Content $constFile -Raw -ErrorAction SilentlyContinue
     $vMatch = if ($rawConst -match 'VERSION\s*=\s*"([^"]+)"') { $Matches[1] } else { "0.0.1" }
     $bMatch = if ($rawConst -match 'BUILD\s*=\s*"([^"]+)"') { $Matches[1] } else { "" }
-    $localVer = if ($bMatch) { "v$vMatch-$bMatch" } else { "v$vMatch" }
+    $localVer = if ($bMatch) { "v$vMatch ($bMatch)" } else { "v$vMatch" }
 }
 
 try {
@@ -80,11 +80,11 @@ try {
     $shortSha = if ($release.target_commitish -and $release.target_commitish.Length -ge 7) {
         $release.target_commitish.Substring(0, 7)
     } else { "" }
-    $newVer = if ($rawTag -eq 'dev') {
-        $baseVer = if ($vMatch) { $vMatch } else { "0.0.2" }
-        if ($shortSha) { "v$baseVer-$shortSha (ZXD44)" } else { "v$baseVer (ZXD44)" }
+    $baseVer = if ($rawTag -eq 'dev') { if ($vMatch) { "v$vMatch" } else { "v0.0.2" } } else { $rawTag }
+    $newVer = if ($shortSha) {
+        "★ $baseVer · main ($shortSha) [NEW]"
     } else {
-        "$rawTag (ZXD44)"
+        "★ $baseVer · main [NEW]"
     }
 
     if (Test-Path $InstallDir) {
