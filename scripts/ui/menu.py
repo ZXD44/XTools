@@ -73,7 +73,7 @@ def render_main_dashboard() -> None:
             title = title_th if curr_lang == "th" else title_en
             desc = desc_th if curr_lang == "th" else desc_en
             print(f"│  {CYAN}[{key}]{RESET} {BOLD}{title:<26}{RESET} {DIM}{desc}{RESET}")
-        print(f"{BOLD}├── คำสั่งระบบและตั้งค่า (Quick Actions) ─────────────────┤{RESET}")
+        print(f"{BOLD}├── {t('quick_actions')} ───────────────────────────────────────┤{RESET}")
 
         # ส่วนที่ 2: เมนูด่วน (Control Bar)
         print(f"│  {GREEN}[S]{RESET} {t('sys_check'):<26} {DIM}{t('sys_check_desc')}{RESET}")

@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from scripts.config.constants import CATEGORIES, SCRIPTS_DIR, SUPPORTED_EXTS
+from scripts.ui.i18n import t
 
 
 @dataclass
@@ -30,7 +31,7 @@ def discover_category_tools(folder: str) -> list[ToolEntry]:
             tools.append(
                 ToolEntry(
                     name=item.stem,
-                    desc=f"{item.suffix.lstrip('.').upper()} executable",
+                    desc=t("script_exec").format(ext=item.suffix.lstrip(".").upper()),
                     entry=item,
                     runtime="auto",
                     cwd=item.parent,
@@ -47,7 +48,7 @@ def discover_category_tools(folder: str) -> list[ToolEntry]:
                         tools.append(
                             ToolEntry(
                                 name=meta.get("name", item.name),
-                                desc=meta.get("desc", "Plugin module"),
+                                desc=meta.get("desc", t("plugin_mod")),
                                 entry=entry_path,
                                 runtime=meta.get("runtime", "auto"),
                                 cwd=item,

@@ -22,6 +22,7 @@ from scripts.config.constants import (
     VERSION,
     YELLOW,
 )
+from scripts.ui.i18n import t
 
 BANNER_ART = [
     r" __  _______ ___   ___  _     ____  ",
@@ -65,7 +66,7 @@ def get_build_id() -> str:
 def get_subtitle_line() -> str:
     """เรนเดอร์แท็กสถานะระบบและผู้สร้าง"""
     update_badge = (
-        f"  {YELLOW}[UPDATE AVAILABLE: v{_latest_version} — press U]{RESET}"
+        f"  {YELLOW}{t('update_badge').format(ver=_latest_version)}{RESET}"
         if _latest_version
         else ""
     )

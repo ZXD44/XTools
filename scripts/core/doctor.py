@@ -60,28 +60,28 @@ def run_system_doctor() -> None:
         ("docker", ["docker", "--version"]),
     ]
 
-    print(f"\n{BOLD}Runtimes & Compilers:{RESET}")
+    print(f"\n{BOLD}{t('runtimes_header')}{RESET}")
     for name, ver_cmd in runtimes:
         if shutil.which(name):
             try:
                 out = subprocess.check_output(ver_cmd, stderr=subprocess.STDOUT, text=True, timeout=3)
-                first_line = out.strip().splitlines()[0] if out.strip() else "installed"
+                first_line = out.strip().splitlines()[0] if out.strip() else "OK"
                 print(f"  {GREEN}[OK]{RESET} {name:<8} {DIM}{first_line}{RESET}")
             except Exception:
-                print(f"  {GREEN}[OK]{RESET} {name:<8} {DIM}found{RESET}")
+                print(f"  {GREEN}[OK]{RESET} {name:<8} {DIM}OK{RESET}")
         else:
-            print(f"  {DIM}[--] {name:<8} not installed{RESET}")
+            print(f"  {DIM}[--] {name:<8} {t('not_installed')}{RESET}")
 
     bin_dir = str(ROOT_DIR / "bin")
     in_path = bin_dir.lower() in os.environ.get("PATH", "").lower()
-    path_status = f"{GREEN}[OK]{RESET} in PATH" if in_path else f"{YELLOW}[!] not in current PATH session{RESET}"
-    print(f"\n{BOLD}Environment Integration:{RESET}")
+    path_status = f"{GREEN}[OK]{RESET} {t('in_path')}" if in_path else f"{YELLOW}[!] {t('not_in_path')}{RESET}"
+    print(f"\n{BOLD}{t('env_header')}{RESET}")
     print(f"  XTools\\bin : {path_status}")
 
     try:
         usage = shutil.disk_usage(ROOT_DIR)
         free_gb = usage.free / (1024 ** 3)
-        print(f"  Disk Free  : {free_gb:.1f} GB")
+        print(f"  {t('disk_free')} {free_gb:.1f} GB")
     except Exception:
         pass
 
