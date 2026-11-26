@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     XTools Windows Bootstrapper (install.ps1)
     ตัวติดตั้งและอัปเดต XTools สำหรับ Windows (ภาษาไทย + Bento Box UI)
@@ -76,7 +76,16 @@ try {
     Write-Host "${CYAN}[1/4]${RESET} กำลังตรวจสอบเวอร์ชันล่าสุดจาก GitHub..."
     $headers = @{ 'User-Agent' = 'XTools-Installer' }
     $release = Invoke-RestMethod -Uri $ApiUrl -Headers $headers -UseBasicParsing
-    $newVer = $release.tag_name
+    $rawTag = $release.tag_name
+    $shortSha = if ($release.target_commitish -and $release.target_commitish.Length -ge 7) {
+        $release.target_commitish.Substring(0, 7)
+    } else { "" }
+    $newVer = if ($rawTag -eq 'dev') {
+        $baseVer = if ($vMatch) { $vMatch } else { "0.0.2" }
+        if ($shortSha) { "v$baseVer-$shortSha (ZXD44)" } else { "v$baseVer (ZXD44)" }
+    } else {
+        "$rawTag (ZXD44)"
+    }
 
     if (Test-Path $InstallDir) {
         Write-Host ""
