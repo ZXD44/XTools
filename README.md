@@ -32,7 +32,6 @@ XTools/
 ├── bin/                       # ตัวเรียกคำสั่งหลักเข้าสู่ PATH
 │   └── xtools.bat
 ├── docs/                      # เอกสารคู่มือและการพัฒนา
-│   └── xtools_installer_prompt.md
 ├── scripts/                   # โมดูลระบบ XTools Hub
 │   ├── config/                # [1] การตั้งค่า สี และค่าคงที่
 │   │   └── constants.py       # รวมตัวแปรพาธ, ANSI Colors, รายชื่อหมวดหมู่
