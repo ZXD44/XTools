@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 # ข้อมูลเวอร์ชันและ Repo
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 BUILD = "dfc9e4a"
 REPO = "ZXD44/XTools"
 
