@@ -27,12 +27,34 @@ if ($status) {
     Write-Host "[i] No tracked changes to commit." -ForegroundColor Yellow
 }
 
+# $ErrorActionPreference ไม่จับ exit code ของ native command — ต้องเช็คเอง
+# ไม่งั้น push ล้มเหลว (เช่น network/protected branch) แต่สคริปต์ยังบอก [OK]
 git push origin main
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[X] git push main failed (exit $LASTEXITCODE) — nothing was released." -ForegroundColor Red
+    exit 1
+}
 $sha = (git rev-parse --short HEAD).Trim()
-Write-Host "[OK] Pushed main ($sha) -> Rolling 'dev' pre-release updating." -ForegroundColor Cyan
+
+# workflow เฝ้าแค่ bin/, scripts/, assets/ — push ที่แตะแค่ rust/, deploy.ps1 หรือ
+# .gitignore จะไม่ trigger CI เลย จึงต้องรายงานตามจริง ไม่ใช่บอกว่า 'dev กำลังอัปเดต'
+$watched = @(git diff-tree --no-commit-id --name-only -r HEAD | Where-Object { $_ -match '^(bin|scripts|assets)/' })
+if ($watched.Count -gt 0) {
+    Write-Host "[OK] Pushed main ($sha) -> Rolling 'dev' pre-release updating ($($watched.Count) watched file(s))." -ForegroundColor Cyan
+} else {
+    Write-Host "[i] Pushed main ($sha), but no file under bin/, scripts/ or assets/ changed -> CI will NOT rebuild 'dev'." -ForegroundColor Yellow
+}
 
 if ($Tag) {
     git tag -f $Tag HEAD
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[X] git tag $Tag failed (exit $LASTEXITCODE)" -ForegroundColor Red
+        exit 1
+    }
     git push -f origin "refs/tags/$Tag"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[X] git push tag $Tag failed (exit $LASTEXITCODE) — tag exists locally only." -ForegroundColor Red
+        exit 1
+    }
     Write-Host "[OK] Tagged & pushed stable release: $Tag" -ForegroundColor Green
 }
