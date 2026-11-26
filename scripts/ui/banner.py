@@ -1,14 +1,18 @@
 """
-แบนเนอร์และอนิเมชั่นแสดงผลหน้าตาคอนโซล (Banner & Visual Animation)
+แบนเนอร์และอนิเมชั่นแสดงผลหน้าตาคอนโซล (Banner & Continuous Water Wave Animation)
 """
 
+import math
 import os
 import random
 import subprocess
 import sys
+import threading
 import time
 from scripts.config.constants import (
+    BLUE,
     BOLD,
+    BUILD,
     CYAN,
     DIM,
     NEON_PALETTE,
@@ -16,8 +20,6 @@ from scripts.config.constants import (
     RESET,
     ROOT_DIR,
     VERSION,
-    BUILD,
-    BLUE,
     YELLOW,
 )
 
@@ -30,6 +32,8 @@ BANNER_ART = [
 ]
 
 _latest_version: str | None = None
+_render_lock = threading.Lock()
+_wave_phase: float = 0.0
 
 
 def set_latest_version(ver: str | None) -> None:
@@ -72,17 +76,45 @@ def get_subtitle_line() -> str:
     )
 
 
+def _water_rgb(col: int, row: int, phase: float) -> tuple[int, int, int]:
+    """คำนวณสีคลื่นน้ำแบบ Dual-Harmonic Sine Wave 2D (น้ำเงินเข้ม -> ฟ้า -> อควา -> ฟองคลื่นขาว)"""
+    w1 = math.sin(col * 0.22 - phase + row * 0.65)
+    w2 = math.sin(col * 0.11 + phase * 0.6 - row * 0.40) * 0.35
+    val = max(0.0, min(1.0, (w1 + w2 + 1.35) / 2.7))
+    crest = val ** 2.4
+    r = int(8 + crest * 205)
+    g = int(85 + val * 155 + crest * 15)
+    b = int(175 + val * 80)
+    return min(r, 255), min(g, 255), min(b, 255)
+
+
+def render_wave_frame(phase: float = 0.0) -> str:
+    """สร้างเฟรมแบนเนอร์คลื่นน้ำ 1 เฟรม"""
+    lines = []
+    for r_idx, line in enumerate(BANNER_ART):
+        buf = []
+        for c_idx, ch in enumerate(line):
+            if ch == " ":
+                buf.append(" ")
+            else:
+                r, g, b = _water_rgb(c_idx, r_idx, phase)
+                buf.append(f"\033[38;2;{r};{g};{b}m{BOLD}{ch}")
+        buf.append(RESET)
+        lines.append("".join(buf))
+    return "\n".join(lines)
+
+
 def animate_startup_banner() -> None:
-    """อนิเมชั่น Cyber Glitch Decode + Neon Gradient Wave เมื่อเปิด Hub ครั้งแรก"""
-    if os.environ.get("XTOOLS_NO_ANIM") == "1":
+    """อนิเมชั่น Cyber Glitch Decode ก่อนเข้าสู่คลื่นน้ำ"""
+    if os.environ.get("XTOOLS_NO_ANIM") == "1" or not sys.stdout.isatty():
         render_static_banner()
         return
 
     glyphs = "#@%&$*+=-:/\\|"
     width = max(len(line) for line in BANNER_ART)
-    frames = 10
+    frames = 8
 
-    sys.stdout.write("\033[?25l")  # ซ่อนเคอร์เซอร์
+    sys.stdout.write("\033[?25l")
     try:
         for step in range(frames + 1):
             locked_cols = int((step / frames) * width)
@@ -93,23 +125,83 @@ def animate_startup_banner() -> None:
                     if ch == " ":
                         buf.append(" ")
                     elif c_idx <= locked_cols:
-                        color = NEON_PALETTE[(c_idx // 4 + step + r_idx) % len(NEON_PALETTE)]
-                        buf.append(f"{color}{BOLD}{ch}{RESET}")
+                        r, g, b = _water_rgb(c_idx, r_idx, step * 0.35)
+                        buf.append(f"\033[38;2;{r};{g};{b}m{BOLD}{ch}")
                     else:
-                        buf.append(f"{DIM}{random.choice(glyphs)}{RESET}")
+                        color = NEON_PALETTE[(c_idx + step) % len(NEON_PALETTE)]
+                        buf.append(f"{color}{DIM}{random.choice(glyphs)}{RESET}")
+                buf.append(RESET)
                 out_lines.append("".join(buf))
             if step > 0:
                 sys.stdout.write(f"\033[{len(BANNER_ART)}A")
             sys.stdout.write("\n".join(out_lines) + "\n")
             sys.stdout.flush()
-            time.sleep(0.032)
+            time.sleep(0.03)
     finally:
-        sys.stdout.write("\033[?25h")  # คืนค่าเคอร์เซอร์
+        sys.stdout.write("\033[?25h")
 
     print(get_subtitle_line())
 
 
 def render_static_banner() -> None:
-    """แสดงแบนเนอร์แบบคงที่สำหรับหน้าเมนูย่อย"""
-    art = "\n".join(BANNER_ART)
-    print(f"{CYAN}{BOLD}\n{art}\n{RESET}{get_subtitle_line()}")
+    """แสดงแบนเนอร์คลื่นน้ำเฟรมปัจจุบัน"""
+    print(f"{render_wave_frame(_wave_phase)}\n{get_subtitle_line()}")
+
+
+def wave_input(prompt: str) -> str:
+    """รับค่าจากผู้ใช้พร้อมขยับแบนเนอร์เป็นคลื่นน้ำตลอดเวลา"""
+    if os.environ.get("XTOOLS_NO_ANIM") == "1" or not (sys.stdout.isatty() and sys.stdin.isatty()):
+        return input(prompt)
+
+    stop_event = threading.Event()
+
+    def _wave_worker() -> None:
+        global _wave_phase
+        while not stop_event.is_set():
+            frame = render_wave_frame(_wave_phase)
+            with _render_lock:
+                if stop_event.is_set():
+                    break
+                sys.stdout.write(f"\033[s\033[?25l\033[1;1H{frame}\033[u\033[?25h")
+                sys.stdout.flush()
+            _wave_phase += 0.26
+            stop_event.wait(0.055)
+
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
+
+    worker = threading.Thread(target=_wave_worker, daemon=True)
+    worker.start()
+
+    try:
+        if os.name == "nt":
+            import msvcrt
+
+            buf: list[str] = []
+            while True:
+                ch = msvcrt.getwch()
+                if ch in ("\r", "\n"):
+                    with _render_lock:
+                        sys.stdout.write("\n")
+                        sys.stdout.flush()
+                    return "".join(buf)
+                elif ch == "\x03":
+                    raise KeyboardInterrupt
+                elif ch in ("\x08", "\x7f"):
+                    if buf:
+                        buf.pop()
+                        with _render_lock:
+                            sys.stdout.write("\b \b")
+                            sys.stdout.flush()
+                elif ch in ("\x00", "\xe0"):
+                    msvcrt.getwch()
+                elif ch >= " ":
+                    buf.append(ch)
+                    with _render_lock:
+                        sys.stdout.write(ch)
+                        sys.stdout.flush()
+        else:
+            return input("")
+    finally:
+        stop_event.set()
+        worker.join(timeout=0.2)

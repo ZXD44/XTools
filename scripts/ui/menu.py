@@ -17,7 +17,7 @@ from scripts.config.constants import (
 from scripts.core.discovery import discover_category_tools
 from scripts.core.doctor import run_system_doctor, run_system_update
 from scripts.core.runner import execute_tool
-from scripts.ui.banner import animate_startup_banner, render_static_banner
+from scripts.ui.banner import animate_startup_banner, render_static_banner, wave_input
 from scripts.ui.i18n import get_current_lang, set_current_lang, t
 
 
@@ -44,7 +44,7 @@ def render_category_viewport(title: str, folder: str) -> None:
         print(f"{BOLD}{BLUE}└────────────────────────────────────────────────────────┘{RESET}")
         print(f"   {DIM}[0] {t('back')}{RESET}\n")
 
-        choice = input(f"   {BOLD}{t('select')} > {RESET}").strip()
+        choice = wave_input(f"   {BOLD}{t('select')} > {RESET}").strip()
         if choice in ("0", ""):
             return
 
@@ -82,7 +82,7 @@ def render_main_dashboard() -> None:
         print(f"│  {RED}[0]{RESET} {t('exit'):<26}")
         print(f"{BOLD}└────────────────────────────────────────────────────────┘{RESET}\n")
 
-        choice = input(f"   {BOLD}XTools > {RESET}").strip().lower()
+        choice = wave_input(f"   {BOLD}XTools > {RESET}").strip().lower()
 
         if choice in ("0", "q", "exit"):
             print(f"\n   {DIM}{t('bye')}{RESET}\n")
