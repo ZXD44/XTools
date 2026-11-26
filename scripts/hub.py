@@ -18,6 +18,7 @@ if os.name == "nt":
     os.system("")
 
 VERSION = "0.0.1"
+BUILD = "374b5ab"
 REPO = "ZXD44/XTools"
 
 CYAN = "\033[96m"
@@ -155,6 +156,22 @@ BANNER_LINES = [
 NEON_PALETTE = ["\033[96m", "\033[36m", "\033[94m", "\033[97m", "\033[96m"]
 
 
+def get_build_id() -> str:
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(ROOT_DIR),
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=1,
+        ).strip()
+        if out:
+            return out
+    except Exception:
+        pass
+    return BUILD
+
+
 def subtitle_line() -> str:
     update_badge = (
         f"  {YELLOW}[UPDATE AVAILABLE: v{_latest_version} — press U]{RESET}"
@@ -162,7 +179,7 @@ def subtitle_line() -> str:
         else ""
     )
     return (
-        f"  {CYAN}XTools Hub v{VERSION}{RESET} {DIM}|{RESET} "
+        f"  {CYAN}XTools Hub v{VERSION} {DIM}({get_build_id()}){RESET} {DIM}|{RESET} "
         f"{RED}{BOLD}ZXD44{RESET}{DIM}/XTools{RESET} {DIM}|{RESET} "
         f"{BLUE}Python {sys.version.split()[0]}{RESET}{update_badge}\n"
     )
