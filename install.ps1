@@ -121,11 +121,12 @@ try {
     # 7. Extract to $env:LOCALAPPDATA\Xtools
     # ==========================================================================
     Write-Host "${CYAN}[3/4]${RESET} Extracting to: $InstallDir"
-    if (Test-Path $InstallDir) {
-        Remove-Item -Path $InstallDir -Recurse -Force
+    $StageDir = Join-Path $TempDir 'stage'
+    Expand-Archive -Path $ZipPath -DestinationPath $StageDir -Force
+    if (-not (Test-Path $InstallDir)) {
+        New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
     }
-    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-    Expand-Archive -Path $ZipPath -DestinationPath $InstallDir -Force
+    Copy-Item -Path (Join-Path $StageDir '*') -Destination $InstallDir -Recurse -Force
 
     # ==========================================================================
     # 8. Add Xtools\bin to User PATH (No Admin Required)
