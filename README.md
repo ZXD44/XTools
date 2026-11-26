@@ -80,7 +80,37 @@ curl -fsSL https://raw.githubusercontent.com/ZXD44/XTools/main/install.sh | bash
 | `xtools doctor` | ตรวจสอบสุขภาพระบบ (Python, Git, Rust, Node, PATH, Disk) |
 | `xtools update` | ดาวน์โหลดและอัปเดต XTools เป็นเวอร์ชันล่าสุด |
 | `xtools lang [th\|en]` | สลับภาษาการแสดงผลระหว่าง ไทย และ อังกฤษ |
+| `xtools rust-anything` | เปิด **Rust-First Studio** — port โปรเจกต์เป็น Rust ด้วย [rust-anything](https://github.com/erkamyaman/rust-anything) |
 | `xtools <ชื่อเครื่องมือ>` | สั่งรันเครื่องมือในหมวดหมู่ย่อยโดยตรงทันที |
+
+---
+
+## 🦀 มาตรฐาน Rust-First (ทุกโปรเจกต์ที่รับมาหรือสร้างใหม่)
+
+XTools ใช้ [`rust-anything`](https://github.com/erkamyaman/rust-anything) เป็นเครื่องมือมาตรฐานในหมวด `Dev & Git`:
+รับโปรเจกต์เดิม (TypeScript/JavaScript, Python, C, Go, Ruby, Java, Kotlin, PHP, PowerShell, C#)
+บันทึกพฤติกรรมจริงไว้ แล้วเขียนใหม่เป็น **Rust** ทีละส่วน โดยตรวจว่าเหมือนเดิมทุกเคสก่อนไปต่อ
+
+เป้าหมายที่ต้องยืนยันด้วยการวัด ไม่ใช่คำโฆษณา:
+
+| เป้าหมาย | พิสูจน์ด้วย |
+|---|---|
+| **เบา** | ไบนารีเดี่ยว ไม่ต้องพา runtime / `node_modules` / venv ไปด้วย |
+| **เร็ว** | `rust-anything bench` เทียบของเดิม (ถ้าไม่ดีขึ้น รายงานตามจริง) |
+| **ลื่น** | เริ่มทำงานไว ตอบ `--help` ทันที ไม่มี startup ค้าง |
+| **ประหยัดพื้นที่** | รายงานขนาด artifact ก่อน/หลัง (release + strip) |
+| **เสถียร** | `diff` ตรงทุกเคส + `gate` ผ่าน + `fuzz` ไม่พบความต่าง |
+
+ลำดับงานบังคับ: `analyze → profile → bridge → record → diff → bench → gate` — **ห้าม ship ถ้ายังไม่ผ่าน `gate`**
+รายละเอียดทั้งหมดอยู่ใน [`.agent/rules.md`](.agent/rules.md) หัวข้อ 5
+
+```bash
+# ติดตั้งครั้งเดียว
+cargo install rust-anything   # หรือ npm install -g rust-anything
+
+# เข้าโหมด Studio ผ่าน XTools
+xtools rust-anything
+```
 
 ---
 
@@ -92,7 +122,7 @@ curl -fsSL https://raw.githubusercontent.com/ZXD44/XTools/main/install.sh | bash
   - ไปที่ [`scripts/ui/menu.py`](scripts/ui/menu.py) ในฟังก์ชัน `render_main_dashboard()`
 - **อยากแก้สี / เปลี่ยนชื่อหมวดหมู่ / เพิ่มหมวดหมู่ใหม่**:
   - ไปที่ [`scripts/config/constants.py`](scripts/config/constants.py) ในตัวแปร `CATEGORIES`
-- **อยากเพิ่มโปรเจกต์ย่อยเข้ามาใน XTools**:
+- **อยากเพิ่มโปรเจกต์ย่อยเข้ามาใน XTools** (ต้องเป็น Rust หรือ port ด้วย `rust-anything` ตามหัวข้อ 5):
   - สร้างโฟลเดอร์ใน `scripts/<หมวด>/<ชื่อโปรเจกต์>/` แล้ววางไฟล์ `tool.json`
   ```json
   {

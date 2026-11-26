@@ -1,0 +1,6 @@
+{
+  "name": "rust-anything",
+  "desc": "Rust-First Studio — port any project to Rust, light | fast | smooth | compact | stable",
+  "entry": "main.py",
+  "runtime": "python"
+}

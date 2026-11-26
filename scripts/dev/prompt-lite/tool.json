@@ -1,0 +1,6 @@
+{
+  "name": "prompt-lite",
+  "desc": "Thai -> Compressed English Prompt Translator (Alt+T / F8 / ;;)",
+  "entry": "agyx.py",
+  "runtime": "python"
+}

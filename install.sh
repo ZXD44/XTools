@@ -13,7 +13,11 @@ set -euo pipefail
 REPO="${XTOOLS_REPO:-ZXD44/XTools}"
 INSTALL_DIR="${HOME}/.local/share/XTools"
 BIN_DIR="${INSTALL_DIR}/bin"
-API_URL="https://api.github.com/repos/${REPO}/releases/latest"
+if [ "${XTOOLS_CHANNEL:-stable}" = "dev" ]; then
+    API_URL="https://api.github.com/repos/${REPO}/releases/tags/dev"
+else
+    API_URL="https://api.github.com/repos/${REPO}/releases/latest"
+fi
 TMP_DIR="$(mktemp -d)"
 
 CYAN='\033[0;96m'
