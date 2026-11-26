@@ -3,8 +3,8 @@
 ชุดเครื่องมือ Automation หลายภาษา (Python, Batch, Rust) ติดตั้งง่ายในคำสั่งเดียว
 Multi-language automation toolkit (Python, Batch, Rust) with one-liner installers.
 
-[![Release](https://img.shields.io/github/v/release/ZXD44/Xtools?style=flat-square&color=00b4d8)](https://github.com/ZXD44/Xtools/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue?style=flat-square)](https://github.com/ZXD44/Xtools)
+[![Release](https://img.shields.io/github/v/release/ZXD44/XTools?style=flat-square&color=00b4d8)](https://github.com/ZXD44/XTools/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue?style=flat-square)](https://github.com/ZXD44/XTools)
 
 ---
 
