@@ -1,0 +1,121 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "C:\\Users\\ZirconX\\Documents\\XTools",
+  "unit": "scripts/ui/",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "ui-rs",
+  "exports": [
+    {
+      "name": "t",
+      "file": "scripts/ui/i18n.py",
+      "line": 109,
+      "params": [
+        {
+          "name": "key",
+          "ts_type": "string",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "string",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": [
+    {
+      "name": "set_latest_version",
+      "file": "scripts/ui/banner.py",
+      "line": 57,
+      "reason": "module-global banner state"
+    },
+    {
+      "name": "get_latest_version",
+      "file": "scripts/ui/banner.py",
+      "line": 62,
+      "reason": "module-global banner state"
+    },
+    {
+      "name": "get_build_id",
+      "file": "scripts/ui/banner.py",
+      "line": 66,
+      "reason": "runs the git CLI subprocess"
+    },
+    {
+      "name": "get_subtitle_line",
+      "file": "scripts/ui/banner.py",
+      "line": 83,
+      "reason": "ANSI terminal rendering + git subprocess"
+    },
+    {
+      "name": "render_wave_frame",
+      "file": "scripts/ui/banner.py",
+      "line": 111,
+      "reason": "ANSI truecolor terminal rendering"
+    },
+    {
+      "name": "animate_startup_banner",
+      "file": "scripts/ui/banner.py",
+      "line": 127,
+      "reason": "terminal animation, stdout cursor control"
+    },
+    {
+      "name": "render_static_banner",
+      "file": "scripts/ui/banner.py",
+      "line": 166,
+      "reason": "terminal rendering to stdout"
+    },
+    {
+      "name": "wave_input",
+      "file": "scripts/ui/banner.py",
+      "line": 171,
+      "reason": "reads stdin keystrokes (msvcrt/input), UI I/O"
+    },
+    {
+      "name": "load_lang",
+      "file": "scripts/ui/i18n.py",
+      "line": 72,
+      "reason": "reads user config file ~/.xtools_config.json"
+    },
+    {
+      "name": "save_lang",
+      "file": "scripts/ui/i18n.py",
+      "line": 84,
+      "reason": "writes user config file"
+    },
+    {
+      "name": "get_current_lang",
+      "file": "scripts/ui/i18n.py",
+      "line": 99,
+      "reason": "module-global mutable state"
+    },
+    {
+      "name": "set_current_lang",
+      "file": "scripts/ui/i18n.py",
+      "line": 103,
+      "reason": "mutates module-global and writes config"
+    },
+    {
+      "name": "clear_console_viewport",
+      "file": "scripts/ui/menu.py",
+      "line": 24,
+      "reason": "console clear + OS call"
+    },
+    {
+      "name": "render_category_viewport",
+      "file": "scripts/ui/menu.py",
+      "line": 28,
+      "reason": "interactive console loop"
+    },
+    {
+      "name": "render_main_dashboard",
+      "file": "scripts/ui/menu.py",
+      "line": 56,
+      "reason": "interactive console dashboard"
+    }
+  ]
+}
