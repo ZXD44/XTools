@@ -90,8 +90,12 @@ def main_menu() -> None:
     while True:
         clear()
         accounts = load_accounts()
+        active = get_active_account()
+        lock_owner = get_lock_owner()
         _h("Dashboard")
-        print()
+        active_lbl = f"{GREEN}{BOLD}{active}{RESET}" if active else f"{YELLOW}ยังไม่ได้เลือก{RESET}"
+        lock_lbl = f"{MAGENTA}{lock_owner}{RESET}" if lock_owner else f"{DIM}ว่าง{RESET}"
+        print(f"  {DIM}กำลังใช้งาน:{RESET} {active_lbl}  {DIM}|{RESET}  {DIM}บัญชี:{RESET} {len(accounts)}  {DIM}|{RESET}  {DIM}Lock:{RESET} {lock_lbl}\n")
 
         if not accounts:
             print(f"  {RED}ไม่พบบัญชี AGY — ลงชื่อเข้าใช้ด้วย AGY ก่อน{RESET}\n")
@@ -329,6 +333,23 @@ def _backup_menu() -> None:
         except Exception as e:
             print(f"  {RED}[ผิดพลาด] {e}{RESET}")
         time.sleep(1.8)
+
+
+def _cooldown_menu(accounts: list[AgyAccount]) -> None:
+    n = len(accounts)
+    if n == 0:
+        return
+    idx = wave_input(f"  เลือกบัญชีตั้ง Cooldown [1-{n}]: ").strip()
+    if idx.isdigit() and 1 <= int(idx) <= n:
+        hrs_str = wave_input("  จำนวนชั่วโมง (เว้นว่าง = 5 ชม.): ").strip()
+        try:
+            hrs = float(hrs_str) if hrs_str else 5.0
+        except ValueError:
+            hrs = 5.0
+        email = accounts[int(idx) - 1].email
+        set_cooldown(email, hrs)
+        print(f"  {YELLOW}[OK] ตั้ง Cooldown '{email}' {hrs:.1f} ชม. แล้ว{RESET}")
+        time.sleep(1.2)
 
 
 if __name__ == "__main__":
