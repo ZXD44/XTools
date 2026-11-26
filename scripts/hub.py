@@ -17,7 +17,7 @@ from pathlib import Path
 if os.name == "nt":
     os.system("")
 
-VERSION = "1.0.0"
+VERSION = "0.0.1"
 REPO = "ZXD44/XTools"
 
 CYAN = "\033[96m"
