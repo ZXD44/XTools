@@ -64,6 +64,6 @@ def execute_tool(tool: ToolEntry, extra_args: list[str] | None = None) -> None:
     try:
         subprocess.run(cmd, cwd=str(tool.cwd), check=False)
     except FileNotFoundError as e:
-        print(f"{RED}[ERROR] Runtime not found: {e}{RESET}")
+        print(f"{RED}{t('runtime_not_found').format(err=e)}{RESET}")
     except KeyboardInterrupt:
         print(f"\n{YELLOW}[!] {t('interrupted')}{RESET}")

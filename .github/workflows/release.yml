@@ -2,6 +2,12 @@ name: Release XTools
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - 'bin/**'
+      - 'scripts/**'
+      - 'assets/**'
     tags:
       - 'v*'
 
@@ -16,9 +22,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Inject Build Commit Hash
+        id: meta
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           sed -i "s/^BUILD = .*/BUILD = \"${SHORT_SHA}\"/" scripts/config/constants.py
+          echo "sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v0.0.1-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Package xtools.zip
         run: |
@@ -36,6 +49,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.meta.outputs.tag }}
           files: |
             xtools.zip
             xtools.zip.sha256
