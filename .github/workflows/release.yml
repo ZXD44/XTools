@@ -1,0 +1,39 @@
+name: Release XTools
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Package xtools.zip
+        run: |
+          mkdir -p dist_pkg
+          for dir in bin scripts assets; do
+            if [ -d "$dir" ]; then
+              cp -r "$dir" dist_pkg/
+            fi
+          done
+          cd dist_pkg
+          zip -r ../xtools.zip .
+          cd ..
+          sha256sum xtools.zip > xtools.zip.sha256
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            xtools.zip
+            xtools.zip.sha256
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
