@@ -15,6 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Inject Build Commit Hash
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          sed -i "s/^BUILD = .*/BUILD = \"${SHORT_SHA}\"/" scripts/config/constants.py
+
       - name: Package xtools.zip
         run: |
           mkdir -p dist_pkg
