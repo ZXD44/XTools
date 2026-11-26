@@ -3,10 +3,12 @@
 
 import json
 import os
+import random
 import shutil
 import subprocess
 import sys
 import threading
+import time
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -72,20 +74,66 @@ def check_latest_version_bg() -> None:
         pass
 
 
+BANNER_LINES = [
+    r" __  _______ ___   ___  _     ____  ",
+    r" \ \/ /_   _/ _ \ / _ \| |   / ___| ",
+    r"  \  /  | || | | | | | | |   \___ \ ",
+    r"  /  \  | || |_| | |_| | |___ ___) |",
+    r" /_/\_\ |_| \___/ \___/|_____|____/ ",
+]
+NEON_PALETTE = ["\033[96m", "\033[36m", "\033[94m", "\033[97m", "\033[96m"]
+
+
+def animate_banner() -> None:
+    """Cyber glitch decode + neon gradient wave (runs once on startup)."""
+    if os.environ.get("XTOOLS_NO_ANIM") == "1":
+        print_banner()
+        return
+
+    glyphs = "#@%&$*+=-:/\\|"
+    width = max(len(line) for line in BANNER_LINES)
+    frames = 10
+
+    sys.stdout.write("\033[?25l")  # hide cursor
+    try:
+        for step in range(frames + 1):
+            locked_cols = int((step / frames) * width)
+            out_lines = []
+            for r_idx, line in enumerate(BANNER_LINES):
+                buf = []
+                for c_idx, ch in enumerate(line):
+                    if ch == " ":
+                        buf.append(" ")
+                    elif c_idx <= locked_cols:
+                        color = NEON_PALETTE[(c_idx // 4 + step + r_idx) % len(NEON_PALETTE)]
+                        buf.append(f"{color}{BOLD}{ch}{RESET}")
+                    else:
+                        buf.append(f"{DIM}{random.choice(glyphs)}{RESET}")
+                out_lines.append("".join(buf))
+            if step > 0:
+                sys.stdout.write(f"\033[{len(BANNER_LINES)}A")
+            sys.stdout.write("\n".join(out_lines) + "\n")
+            sys.stdout.flush()
+            time.sleep(0.032)
+    finally:
+        sys.stdout.write("\033[?25h")  # restore cursor
+
+    update_badge = (
+        f"  {YELLOW}[UPDATE AVAILABLE: v{_latest_version} — press U]{RESET}"
+        if _latest_version
+        else ""
+    )
+    print(f"{DIM}  XTools Hub v{VERSION} | {REPO} | Python {sys.version.split()[0]}{RESET}{update_badge}\n")
+
+
 def print_banner() -> None:
     update_badge = (
         f"  {YELLOW}[UPDATE AVAILABLE: v{_latest_version} — press U]{RESET}"
         if _latest_version
         else ""
     )
-    print(f"""{CYAN}{BOLD}
- __  _______ ___   ___  _     ____  
- \ \/ /_   _/ _ \ / _ \| |   / ___| 
-  \  /  | || | | | | | | |   \___ \ 
-  /  \  | || |_| | |_| | |___ ___) |
- /_/\_\ |_| \___/ \___/|_____|____/ 
-{RESET}{DIM}  XTools Hub v{VERSION} | {REPO} | Python {sys.version.split()[0]}{RESET}{update_badge}
-""")
+    art = "\n".join(BANNER_LINES)
+    print(f"{CYAN}{BOLD}\n{art}\n{RESET}{DIM}  XTools Hub v{VERSION} | {REPO} | Python {sys.version.split()[0]}{RESET}{update_badge}\n")
 
 
 def discover_tools(folder: str) -> list[ToolEntry]:
@@ -276,9 +324,14 @@ def category_menu(title: str, folder: str) -> None:
 
 def interactive_menu() -> None:
     threading.Thread(target=check_latest_version_bg, daemon=True).start()
+    first_launch = True
     while True:
         clear_screen()
-        print_banner()
+        if first_launch:
+            animate_banner()
+            first_launch = False
+        else:
+            print_banner()
         print(f"{BOLD}Select Category:{RESET}\n")
         for key, title, _, desc in CATEGORIES:
             print(f"  {CYAN}[{key}]{RESET} {BOLD}{title:<20}{RESET} {DIM}{desc}{RESET}")
