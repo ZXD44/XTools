@@ -15,10 +15,19 @@ from pathlib import Path
 
 # Enable ANSI escape sequences on Windows 10/11
 if os.name == "nt":
+    import ctypes
+    try:
+        kernel32 = ctypes.windll.kernel32
+        hOut = kernel32.GetStdHandle(-11)
+        mode = ctypes.c_ulong()
+        if kernel32.GetConsoleMode(hOut, ctypes.byref(mode)):
+            kernel32.SetConsoleMode(hOut, mode.value | 0x0004 | 0x0001)
+    except Exception:
+        pass
     os.system("")
 
 VERSION = "0.0.1"
-BUILD = "374b5ab"
+BUILD = "dfc9e4a"
 REPO = "ZXD44/XTools"
 
 CYAN = "\033[96m"
@@ -140,7 +149,8 @@ def check_latest_version_bg() -> None:
         with urllib.request.urlopen(req, timeout=2.5) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             tag = data.get("tag_name", "").lstrip("v")
-            if tag and tag != VERSION:
+            current_full = f"{VERSION}-{BUILD}" if BUILD else VERSION
+            if tag and tag != current_full and tag != VERSION:
                 _latest_version = tag
     except Exception:
         pass
