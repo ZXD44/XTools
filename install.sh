@@ -10,8 +10,8 @@ set -euo pipefail
 # ==============================================================================
 # 1. Configuration & Colors
 # ==============================================================================
-REPO="${XTOOLS_REPO:-ZXD44/Xtools}"
-INSTALL_DIR="${HOME}/.local/share/Xtools"
+REPO="${XTOOLS_REPO:-ZXD44/XTools}"
+INSTALL_DIR="${HOME}/.local/share/XTools"
 BIN_DIR="${INSTALL_DIR}/bin"
 API_URL="https://api.github.com/repos/${REPO}/releases/latest"
 TMP_DIR="$(mktemp -d)"

@@ -1,0 +1,36 @@
+# Secrets & Local Config
+.env
+.env.*
+*.key
+*.pem
+*.pfx
+secrets/
+agentx.md
+.agentx.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+*.spec
+
+# Rust
+target/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+.vscode/
+.idea/
+
+# Release artifacts
+xtools.zip
+xtools.zip.sha256
+dist_pkg/

@@ -12,8 +12,8 @@ $ErrorActionPreference = 'Stop'
 # ==============================================================================
 # 1. Configuration
 # ==============================================================================
-$Repo        = if ($env:XTOOLS_REPO) { $env:XTOOLS_REPO } else { 'ZXD44/Xtools' }
-$InstallDir  = Join-Path $env:LOCALAPPDATA 'Xtools'
+$Repo        = if ($env:XTOOLS_REPO) { $env:XTOOLS_REPO } else { 'ZXD44/XTools' }
+$InstallDir  = Join-Path $env:LOCALAPPDATA 'XTools'
 $BinDir      = Join-Path $InstallDir 'bin'
 $TempDir     = Join-Path $env:TEMP ('xtools-install-' + [guid]::NewGuid().ToString('N'))
 $ZipPath     = Join-Path $TempDir 'xtools.zip'
