@@ -31,13 +31,84 @@ RESET = "\033[0m"
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = ROOT_DIR / "scripts"
+CONFIG_PATH = Path.home() / ".xtools_config.json"
 
 CATEGORIES = [
-    ("1", "System & Cleanup", "system", "System info, temp cleanup, startup & env tools"),
-    ("2", "Dev & Git", "dev", "Repo utilities, formatters, environment helpers"),
-    ("3", "Network & Security", "network", "Diagnostics, port checks, hash & audit tools"),
-    ("4", "Media & Files", "media", "Batch rename, image/icon converters, archivers"),
+    ("1", "System & Cleanup", "ระบบและล้างไฟล์", "system", "System info, temp cleanup, startup & env tools", "ข้อมูลระบบ ล้างไฟล์ขยะ และตั้งค่า"),
+    ("2", "Dev & Git", "พัฒนาและ Git", "dev", "Repo utilities, formatters, environment helpers", "เครื่องมือจัดการ repo และสภาพแวดล้อม"),
+    ("3", "Network & Security", "เครือข่ายและความปลอดภัย", "network", "Diagnostics, port checks, hash & audit tools", "ตรวจสอบพอร์ต เครือข่าย และความปลอดภัย"),
+    ("4", "Media & Files", "มีเดียและไฟล์", "media", "Batch rename, image/icon converters, archivers", "เปลี่ยนชื่อไฟล์ แปลงรูป/ไอคอน และบีบอัด"),
 ]
+
+STRINGS = {
+    "en": {
+        "select_cat": "Select Category:",
+        "sys_check": "System Check",
+        "sys_check_desc": "Check runtimes, PATH, disk & GitHub API",
+        "update": "Update XTools",
+        "update_desc": "Re-run installer from GitHub",
+        "lang_label": "Language",
+        "lang_desc": "Switch EN / TH (saved)",
+        "exit": "Exit",
+        "bye": "Bye.",
+        "no_tools": "(No tools in scripts/{folder}/ yet)",
+        "back": "Back",
+        "select": "Select",
+        "press_enter": "Press Enter to return...",
+        "press_cont": "Press Enter to continue...",
+        "running": "Running",
+        "interrupted": "Interrupted.",
+        "doctor_title": "=== XTools System & Env Check (Doctor) ===",
+    },
+    "th": {
+        "select_cat": "เลือกหมวดหมู่:",
+        "sys_check": "ตรวจสอบระบบ",
+        "sys_check_desc": "เช็ค Python, Git, Rust, Node, PATH และเน็ต",
+        "update": "อัปเดต XTools",
+        "update_desc": "อัปเดตเวอร์ชันล่าสุดจาก GitHub",
+        "lang_label": "ภาษา / Language",
+        "lang_desc": "สลับ EN / TH (บันทึกอัตโนมัติ)",
+        "exit": "ออก",
+        "bye": "ลาก่อน",
+        "no_tools": "(ยังไม่มีเครื่องมือใน scripts/{folder}/)",
+        "back": "กลับ",
+        "select": "เลือก",
+        "press_enter": "กด Enter เพื่อกลับ...",
+        "press_cont": "กด Enter เพื่อดำเนินการต่อ...",
+        "running": "กำลังรัน",
+        "interrupted": "ถูกยกเลิก",
+        "doctor_title": "=== ตรวจสอบระบบและสภาพแวดล้อม (Doctor) ===",
+    },
+}
+
+
+def load_lang() -> str:
+    try:
+        if CONFIG_PATH.is_file():
+            data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+            if data.get("lang") in ("en", "th"):
+                return data["lang"]
+    except Exception:
+        pass
+    return "en"
+
+
+def save_lang(lang: str) -> None:
+    try:
+        data = {}
+        if CONFIG_PATH.is_file():
+            data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        data["lang"] = lang
+        CONFIG_PATH.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+
+_lang = load_lang()
+
+
+def t(key: str) -> str:
+    return STRINGS.get(_lang, STRINGS["en"]).get(key, key)
 
 SUPPORTED_EXTS = {".py", ".bat", ".ps1", ".sh", ".js", ".ts", ".exe"}
 
@@ -177,7 +248,7 @@ def discover_tools(folder: str) -> list[ToolEntry]:
 
 def discover_all_tools() -> list[ToolEntry]:
     all_tools: list[ToolEntry] = []
-    for _, _, folder, _ in CATEGORIES:
+    for _, _, _, folder, _, _ in CATEGORIES:
         all_tools.extend(discover_tools(folder))
     return all_tools
 
@@ -308,21 +379,22 @@ def category_menu(title: str, folder: str) -> None:
         print(f"{BOLD}{BLUE}=== {title} ==={RESET}\n")
         tools = discover_tools(folder)
         if not tools:
-            print(f"  {DIM}(No tools in scripts/{folder}/ yet){RESET}\n")
+            print(f"  {DIM}{t('no_tools').format(folder=folder)}{RESET}\n")
         else:
-            for idx, t in enumerate(tools, 1):
-                print(f"  {CYAN}[{idx}]{RESET} {BOLD}{t.name:<22}{RESET} {DIM}{t.desc}{RESET}")
+            for idx, item in enumerate(tools, 1):
+                print(f"  {CYAN}[{idx}]{RESET} {BOLD}{item.name:<22}{RESET} {DIM}{item.desc}{RESET}")
             print()
-        print(f"  {DIM}[0] Back{RESET}\n")
-        choice = input(f"{BOLD}Select > {RESET}").strip()
+        print(f"  {DIM}[0] {t('back')}{RESET}\n")
+        choice = input(f"{BOLD}{t('select')} > {RESET}").strip()
         if choice == "0" or choice == "":
             return
         if choice.isdigit() and 1 <= int(choice) <= len(tools):
             run_tool(tools[int(choice) - 1])
-            input(f"\n{DIM}Press Enter to return...{RESET}")
+            input(f"\n{DIM}{t('press_enter')}{RESET}")
 
 
 def interactive_menu() -> None:
+    global _lang
     threading.Thread(target=check_latest_version_bg, daemon=True).start()
     first_launch = True
     while True:
@@ -332,33 +404,40 @@ def interactive_menu() -> None:
             first_launch = False
         else:
             print_banner()
-        print(f"{BOLD}Select Category:{RESET}\n")
-        for key, title, _, desc in CATEGORIES:
-            print(f"  {CYAN}[{key}]{RESET} {BOLD}{title:<20}{RESET} {DIM}{desc}{RESET}")
-        print(f"\n  {GREEN}[S]{RESET} System Check         {DIM}Check runtimes, PATH, disk & GitHub API{RESET}")
-        print(f"  {YELLOW}[U]{RESET} Update XTools        {DIM}Re-run installer from GitHub{RESET}")
-        print(f"  {RED}[0]{RESET} Exit\n")
+        print(f"{BOLD}{t('select_cat')}{RESET}\n")
+        for key, title_en, title_th, _, desc_en, desc_th in CATEGORIES:
+            title = title_th if _lang == "th" else title_en
+            desc = desc_th if _lang == "th" else desc_en
+            print(f"  {CYAN}[{key}]{RESET} {BOLD}{title:<24}{RESET} {DIM}{desc}{RESET}")
+        print(f"\n  {GREEN}[S]{RESET} {t('sys_check'):<24} {DIM}{t('sys_check_desc')}{RESET}")
+        print(f"  {YELLOW}[U]{RESET} {t('update'):<24} {DIM}{t('update_desc')}{RESET}")
+        print(f"  {CYAN}[L]{RESET} {t('lang_label'):<24} {DIM}[{_lang.upper()}] {t('lang_desc')}{RESET}")
+        print(f"  {RED}[0]{RESET} {t('exit')}\n")
 
         choice = input(f"{BOLD}XTools > {RESET}").strip().lower()
         if choice in {"0", "q", "exit"}:
-            print(f"{DIM}Bye.{RESET}")
+            print(f"{DIM}{t('bye')}{RESET}")
             break
         elif choice == "s":
             clear_screen()
             print_banner()
             run_doctor()
-            input(f"\n{DIM}Press Enter to return...{RESET}")
+            input(f"\n{DIM}{t('press_enter')}{RESET}")
         elif choice == "u":
             run_update()
-            input(f"\n{DIM}Press Enter to continue...{RESET}")
+            input(f"\n{DIM}{t('press_cont')}{RESET}")
+        elif choice == "l":
+            _lang = "th" if _lang == "en" else "en"
+            save_lang(_lang)
         else:
             matched = [c for c in CATEGORIES if c[0] == choice]
             if matched:
-                _, title, folder, _ = matched[0]
-                category_menu(title, folder)
+                _, title_en, title_th, folder, _, _ = matched[0]
+                category_menu(title_th if _lang == "th" else title_en, folder)
 
 
 def main() -> None:
+    global _lang
     args = sys.argv[1:]
     if not args:
         interactive_menu()
@@ -369,6 +448,13 @@ def main() -> None:
         run_doctor()
     elif cmd in {"update", "upgrade"}:
         run_update()
+    elif cmd == "lang":
+        if len(args) > 1 and args[1].lower() in {"en", "th"}:
+            _lang = args[1].lower()
+        else:
+            _lang = "th" if _lang == "en" else "en"
+        save_lang(_lang)
+        print(f"Language set to: {_lang.upper()}")
     elif cmd in {"-v", "--version", "version"}:
         print(f"XTools v{VERSION}")
     else:
