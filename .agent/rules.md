@@ -19,3 +19,8 @@
 - **Transparency**: Always print the download URL before fetching.
 - **Integrity**: Always verify `SHA256` checksums before extracting archives.
 - **No remote pipe execution**: Download release archives to a temp file and verify before extracting.
+
+## 4. Deploy & Release Workflow
+- Commit and push changes to `main`.
+- Tag a semantic version (`git tag vX.Y.Z && git push origin vX.Y.Z`).
+- `.github/workflows/release.yml` automatically packages `bin/`, `scripts/`, `assets/` into `xtools.zip` + `xtools.zip.sha256` and publishes a GitHub Release.

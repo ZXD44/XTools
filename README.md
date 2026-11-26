@@ -2,7 +2,7 @@
 
 # ⚡ XTools
 
-**Multi-language automation toolkit (Python, Batch, Rust) with one-liner installers & automated GitHub Releases.**
+**ชุดเครื่องมือ Automation หลายภาษา (Python, Batch, Rust) ติดตั้งง่ายในคำสั่งเดียว พร้อมระบบ Auto-Release**
 
 [![Release](https://img.shields.io/github/v/release/ZXD44/Xtools?style=flat-square&color=00b4d8)](https://github.com/ZXD44/Xtools/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue?style=flat-square)](https://github.com/ZXD44/Xtools)
@@ -12,64 +12,74 @@
 
 ---
 
-## 📦 Installation
+## 📦 การติดตั้ง (Installation)
 
 ### Windows (PowerShell)
-```powershell
-irm 'https://xtools.sh/install' | iex
-```
-<details>
-<summary>Fallback (Direct GitHub Raw)</summary>
-
 ```powershell
 irm 'https://raw.githubusercontent.com/ZXD44/XTools/main/install.ps1' | iex
 ```
 
-</details>
-
 ### macOS / Linux
-```bash
-curl -fsSL https://xtools.sh/install.sh | bash
-```
-<details>
-<summary>Fallback (Direct GitHub Raw)</summary>
-
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ZXD44/XTools/main/install.sh | bash
 ```
 
-</details>
+> ตรวจสอบโค้ดก่อนรัน: [`install.ps1`](install.ps1) | [`install.sh`](install.sh)
 
 ---
 
-## 🔍 What the Installer Does
-1. Fetches the latest release from GitHub Releases and prints the download URL.
-2. Verifies the `SHA256` checksum of `xtools.zip` before extracting.
-3. Extracts files to `%LOCALAPPDATA%\XTools` (Windows) or `~/.local/share/XTools` (Unix).
-4. Adds `XTools\bin` to your **User PATH** (no admin privileges required).
-5. Creates a Desktop shortcut (`XTools.lnk`) with `assets/xtools.ico` on Windows.
+## 🚀 การใช้งาน (Usage)
 
-> Inspect the source before running: [`install.ps1`](install.ps1) | [`install.sh`](install.sh)
+เปิดใช้งานได้ 2 วิธี:
+- ดับเบิลคลิกไอคอน **XTools** บน Desktop
+- หรือพิมพ์คำสั่งใน Terminal:
 
----
-
-## 📌 Pinning to Taskbar (Windows)
-Windows does not allow scripts to pin shortcuts to the Taskbar automatically:
-1. Right-click `XTools` on your Desktop (or drag it directly onto the Taskbar).
-2. Select **Pin to taskbar**.
+| คำสั่ง | ความหมาย |
+|---|---|
+| `xtools` | เปิดหน้าเมนู Interactive Hub |
+| `xtools doctor` | เช็คความพร้อมของระบบ (Python, Git, Rust, Node, PATH, Disk) |
+| `xtools update` | อัปเดต XTools เป็นเวอร์ชันล่าสุด |
+| `xtools <ชื่อเครื่องมือ>` | รันเครื่องมือนั้นโดยตรง |
 
 ---
 
-## 🗑️ Uninstall
+## 🔍 สิ่งที่ตัวติดตั้งทำให้อัตโนมัติ
+1. ดึง release ล่าสุดจาก GitHub พร้อมแสดง URL ที่ดาวน์โหลด
+2. ตรวจสอบความถูกต้องของไฟล์ด้วย **SHA256** ก่อนแตกไฟล์
+3. แตกไฟล์ไปที่ `%LOCALAPPDATA%\XTools` (Windows) หรือ `~/.local/share/XTools` (macOS/Linux)
+4. เพิ่ม `XTools\bin` เข้า **User PATH** (ไม่ต้องใช้สิทธิ์ Admin)
+5. สร้าง Desktop Shortcut (`XTools.lnk`) พร้อมไอคอน `assets/xtools.ico`
 
-### Windows
+---
+
+## 📌 ปักหมุดขึ้น Taskbar (Windows)
+Windows ไม่อนุญาตให้ script ปักหมุด Taskbar อัตโนมัติ — ทำได้โดยคลิกขวาที่ไอคอน `XTools` บน Desktop แล้วเลือก **Pin to taskbar**
+
+---
+
+## 🚢 การ Deploy / ออก Release ใหม่
+ทุกครั้งที่แก้ไขโค้ดเสร็จ ให้ push tag เวอร์ชันใหม่:
+```bash
+git add -A
+git commit -m "feat: update tools"
+git push origin main
+git tag v1.2.0
+git push origin v1.2.0
+```
+GitHub Actions (`.github/workflows/release.yml`) จะแพ็ก `xtools.zip` + `xtools.zip.sha256` และสร้าง Release ให้อัตโนมัติ
+
+---
+
+## 🗑️ การถอนการติดตั้ง (Uninstall)
+
+**Windows (PowerShell):**
 ```powershell
 Remove-Item -Recurse -Force "$env:LOCALAPPDATA\XTools"
-# Remove %LOCALAPPDATA%\XTools\bin from User PATH via Environment Variables
 ```
+*(จากนั้นลบ `%LOCALAPPDATA%\XTools\bin` ออกจาก User PATH ใน Environment Variables)*
 
-### macOS / Linux
+**macOS / Linux:**
 ```bash
 rm -rf ~/.local/share/XTools
-# Remove the XTools PATH line from ~/.bashrc or ~/.zshrc
 ```
+*(จากนั้นลบบรรทัด PATH ของ XTools ใน `~/.bashrc` หรือ `~/.zshrc`)*
