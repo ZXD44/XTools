@@ -35,8 +35,7 @@ def check_latest_release_bg() -> None:
         with urllib.request.urlopen(req, timeout=2.5) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             tag = data.get("tag_name", "").lstrip("v")
-            current_full = f"{VERSION}-{BUILD}" if BUILD else VERSION
-            if tag and tag != current_full and tag != VERSION:
+            if tag and tag != "dev" and tag != VERSION:
                 set_latest_version(tag)
     except Exception:
         pass
@@ -96,12 +95,13 @@ def run_system_doctor() -> None:
         print(f"  GitHub API : {RED}[FAIL]{RESET} {e}")
 
 
-def run_system_update() -> None:
+def run_system_update(channel: str = "stable") -> None:
     """สั่งดาวน์โหลดและติดตั้งตัวอัปเดตเวอร์ชันล่าสุด"""
     if os.name == "nt":
+        env_prefix = "$env:XTOOLS_CHANNEL='dev'; " if channel == "dev" else ""
         subprocess.run([
             "powershell", "-NoProfile", "-Command",
-            f"irm 'https://raw.githubusercontent.com/{REPO}/main/install.ps1' | iex"
+            f"{env_prefix}irm 'https://raw.githubusercontent.com/{REPO}/main/install.ps1' | iex"
         ], check=False)
     else:
         subprocess.run([

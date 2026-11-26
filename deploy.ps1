@@ -1,15 +1,18 @@
-<#
+﻿<#
 .SYNOPSIS
-    XTools Auto-Deploy Script — Commit, Push main & Trigger GitHub Release
+    XTools Deploy Script — Rolling Dev on main push, Stable Release on -Tag
+.EXAMPLE
+    .\deploy.ps1 -Message "fix: tweak wave speed"
+    .\deploy.ps1 -Tag "v0.0.1" -Message "release: XTools v0.0.1"
 #>
 param(
-    [string]$Message = "chore: deploy XTools update"
+    [string]$Message = "chore: deploy XTools update",
+    [string]$Tag = ""
 )
 
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-# 1. Stage tracked changes only (safe against untracked/local-only files)
 git add -u
 if (Test-Path "deploy.ps1") { git add deploy.ps1 }
 
@@ -20,8 +23,12 @@ if ($status) {
     Write-Host "[i] No tracked changes to commit." -ForegroundColor Yellow
 }
 
-# 2. Push main (auto-triggers Release XTools workflow)
 git push origin main
-
 $sha = (git rev-parse --short HEAD).Trim()
-Write-Host "[OK] Pushed main ($sha). GitHub Actions will publish v0.0.1-$sha." -ForegroundColor Cyan
+Write-Host "[OK] Pushed main ($sha) -> Rolling 'dev' pre-release updating." -ForegroundColor Cyan
+
+if ($Tag) {
+    git tag -f $Tag HEAD
+    git push -f origin "refs/tags/$Tag"
+    Write-Host "[OK] Tagged & pushed stable release: $Tag" -ForegroundColor Green
+}
