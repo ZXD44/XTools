@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     XTools Windows Bootstrapper (install.ps1)
     ตัวติดตั้งและอัปเดต XTools สำหรับ Windows (ภาษาไทย + Bento Box UI)
