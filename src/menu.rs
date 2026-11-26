@@ -2,7 +2,7 @@ use std::io::{self, Write};
 use std::process::Command;
 use crate::banner::{render_static_banner, wave_input};
 use crate::config::{root_dir, BLUE, BOLD, CATEGORIES, CYAN, DIM, GREEN, MAGENTA, RED, RESET, YELLOW};
-use crate::discovery::discover_category_tools;
+use crate::discovery::{discover_all_workspace_tools, discover_category_tools};
 use crate::doctor::{run_system_doctor, run_system_update};
 use crate::i18n::{get_lang, set_lang, t};
 use crate::runner::execute_tool;
@@ -107,6 +107,28 @@ pub fn render_main_dashboard() {
             other => {
                 if let Some(&(_, t_en, t_th, folder, _, _)) = CATEGORIES.iter().find(|c| c.0 == other) {
                     render_category_viewport(if th { t_th } else { t_en }, folder);
+                } else if !other.is_empty() {
+                    let q = other.trim_start_matches('/');
+                    let matches: Vec<_> = discover_all_workspace_tools()
+                        .into_iter()
+                        .filter(|t| t.name.to_lowercase().contains(q))
+                        .collect();
+                    if matches.len() == 1 {
+                        execute_tool(&matches[0], &[]);
+                        pause(t("press_enter"));
+                    } else if !matches.is_empty() {
+                        println!("\n   {CYAN}ผลการค้นหา '{q}':{RESET}");
+                        for (i, m) in matches.iter().enumerate() {
+                            println!("   {CYAN}[{}]{RESET} {BOLD}{}{RESET} {DIM}─ {}{RESET}", i + 1, m.name, m.desc);
+                        }
+                        let pick = wave_input(&format!("\n   {BOLD}{} > {RESET}", t("select")));
+                        if let Ok(idx) = pick.trim().parse::<usize>() {
+                            if idx >= 1 && idx <= matches.len() {
+                                execute_tool(&matches[idx - 1], &[]);
+                                pause(t("press_enter"));
+                            }
+                        }
+                    }
                 }
             }
         }
