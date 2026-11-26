@@ -24,6 +24,23 @@ from scripts.config.constants import (
 )
 from scripts.ui.i18n import t
 
+
+def _get_agy_badge() -> str:
+    """ดึงชื่อบัญชี AGY ที่ active อยู่สั้นๆ"""
+    try:
+        import json
+        from pathlib import Path
+        p = Path.home() / ".gemini" / "google_accounts.json"
+        if p.is_file():
+            data = json.loads(p.read_text(encoding="utf-8"))
+            active = data.get("active")
+            if active:
+                name = active.split("@")[0]
+                return f"  {DIM}│{RESET} {GREEN}●{RESET} {DIM}{name}{RESET}"
+    except Exception:
+        pass
+    return ""
+
 BANNER_ART = [
     r" __  _______ ___   ___  _     ____  ",
     r" \ \/ /_   _/ _ \ / _ \| |   / ___| ",
@@ -75,7 +92,7 @@ def get_subtitle_line() -> str:
     return (
         f"  {CYAN}XTools Hub v{VERSION} {DIM}({build_id}){RESET} {DIM}|{RESET} "
         f"{RED}{BOLD}ZXD44{RESET}{DIM}/XTools{RESET} {DIM}|{RESET} "
-        f"{BLUE}Python {sys.version.split()[0]}{RESET}{update_badge}\n"
+        f"{BLUE}Python {sys.version.split()[0]}{RESET}{_get_agy_badge()}{update_badge}\n"
     )
 
 

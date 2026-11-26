@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     XTools Deploy Script — Rolling Dev on main push, Stable Release on -Tag
 .EXAMPLE
