@@ -10,7 +10,7 @@ irm 'https://xtools.sh/install' | iex
 ```
 Fallback (direct GitHub raw):
 ```powershell
-irm 'https://raw.githubusercontent.com/ZXD44/Xtools/main/install.ps1' | iex
+irm 'https://raw.githubusercontent.com/ZXD44/XTools/main/install.ps1' | iex
 ```
 
 ### macOS / Linux
@@ -19,7 +19,7 @@ curl -fsSL https://xtools.sh/install.sh | bash
 ```
 Fallback (direct GitHub raw):
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ZXD44/Xtools/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ZXD44/XTools/main/install.sh | bash
 ```
 
 ### What the installer does
