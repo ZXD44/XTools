@@ -76,6 +76,7 @@ def render_main_dashboard() -> None:
         print(f"{BOLD}├── {t('quick_actions')} ───────────────────────────────────────┤{RESET}")
 
         # ส่วนที่ 2: เมนูด่วน (Control Bar)
+        print(f"│  {CYAN}[A]{RESET} {'AGY Manager':<26} {DIM}Multi-Account, Quota & Profile Binding{RESET}")
         print(f"│  {GREEN}[S]{RESET} {t('sys_check'):<26} {DIM}{t('sys_check_desc')}{RESET}")
         print(f"│  {YELLOW}[U]{RESET} {t('update'):<26} {DIM}{t('update_desc')}{RESET}")
         print(f"│  {CYAN}[L]{RESET} {t('lang_label'):<26} {DIM}[{curr_lang.upper()}] {t('lang_desc')}{RESET}")
@@ -87,6 +88,16 @@ def render_main_dashboard() -> None:
         if choice in ("0", "q", "exit"):
             print(f"\n   {DIM}{t('bye')}{RESET}\n")
             break
+        elif choice == "a":
+            clear_console_viewport()
+            # เปิด agy-manager ผ่าน execute_tool (ใช้ discovery runner เหมือนกัน)
+            from scripts.core.discovery import discover_category_tools
+            agy_tools = [t for t in discover_category_tools("dev") if t.name == "agy-manager"]
+            if agy_tools:
+                execute_tool(agy_tools[0])
+            else:
+                print(f"\n   {RED}ไม่พบ agy-manager ใน scripts/dev/{RESET}\n")
+                input(f"   {DIM}{t('press_enter')}{RESET}")
         elif choice == "s":
             clear_console_viewport()
             render_static_banner()
