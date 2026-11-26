@@ -155,6 +155,19 @@ BANNER_LINES = [
 NEON_PALETTE = ["\033[96m", "\033[36m", "\033[94m", "\033[97m", "\033[96m"]
 
 
+def subtitle_line() -> str:
+    update_badge = (
+        f"  {YELLOW}[UPDATE AVAILABLE: v{_latest_version} — press U]{RESET}"
+        if _latest_version
+        else ""
+    )
+    return (
+        f"  {CYAN}XTools Hub v{VERSION}{RESET} {DIM}|{RESET} "
+        f"{RED}{BOLD}ZXD44{RESET}{DIM}/XTools{RESET} {DIM}|{RESET} "
+        f"{BLUE}Python {sys.version.split()[0]}{RESET}{update_badge}\n"
+    )
+
+
 def animate_banner() -> None:
     """Cyber glitch decode + neon gradient wave (runs once on startup)."""
     if os.environ.get("XTOOLS_NO_ANIM") == "1":
@@ -189,22 +202,12 @@ def animate_banner() -> None:
     finally:
         sys.stdout.write("\033[?25h")  # restore cursor
 
-    update_badge = (
-        f"  {YELLOW}[UPDATE AVAILABLE: v{_latest_version} — press U]{RESET}"
-        if _latest_version
-        else ""
-    )
-    print(f"{DIM}  XTools Hub v{VERSION} | {REPO} | Python {sys.version.split()[0]}{RESET}{update_badge}\n")
+    print(subtitle_line())
 
 
 def print_banner() -> None:
-    update_badge = (
-        f"  {YELLOW}[UPDATE AVAILABLE: v{_latest_version} — press U]{RESET}"
-        if _latest_version
-        else ""
-    )
     art = "\n".join(BANNER_LINES)
-    print(f"{CYAN}{BOLD}\n{art}\n{RESET}{DIM}  XTools Hub v{VERSION} | {REPO} | Python {sys.version.split()[0]}{RESET}{update_badge}\n")
+    print(f"{CYAN}{BOLD}\n{art}\n{RESET}{subtitle_line()}")
 
 
 def discover_tools(folder: str) -> list[ToolEntry]:
