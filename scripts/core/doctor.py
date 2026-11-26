@@ -11,6 +11,7 @@ import urllib.request
 from scripts.config.constants import (
     BLUE,
     BOLD,
+    CONFIG_PATH,
     DIM,
     GREEN,
     RED,
@@ -95,8 +96,31 @@ def run_system_doctor() -> None:
         print(f"  GitHub API : {RED}[FAIL]{RESET} {e}")
 
 
-def run_system_update(channel: str = "stable") -> None:
-    """สั่งดาวน์โหลดและติดตั้งตัวอัปเดตเวอร์ชันล่าสุด"""
+def resolve_channel() -> str:
+    """เลือก channel อัปเดต: env XTOOLS_CHANNEL > ~/.xtools_config.json > default 'dev'
+
+    XTools ปล่อย rolling dev จากทุก push main ดังนั้น default จึงเป็น dev
+    (stable จะได้เฉพาะตอนติดตั้งด้วย XTOOLS_CHANNEL=stable)
+    """
+    env_ch = os.environ.get("XTOOLS_CHANNEL", "").strip().lower()
+    if env_ch in ("dev", "stable"):
+        return env_ch
+    try:
+        cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        cfg_ch = str(cfg.get("channel", "")).strip().lower()
+        if cfg_ch in ("dev", "stable"):
+            return cfg_ch
+    except Exception:
+        pass
+    return "dev"
+
+
+def run_system_update(channel: str | None = None) -> None:
+    """สั่งดาวน์โหลดและติดตั้งตัวอัปเดตตาม channel (default = resolve_channel())"""
+    channel = (channel or resolve_channel()).strip().lower()
+    if channel not in ("dev", "stable"):
+        channel = "dev"
+    print(f"{DIM}channel: {channel}{RESET}")
     if os.name == "nt":
         env_prefix = "$env:XTOOLS_CHANNEL='dev'; " if channel == "dev" else ""
         subprocess.run([
@@ -106,5 +130,5 @@ def run_system_update(channel: str = "stable") -> None:
     else:
         subprocess.run([
             "bash", "-c",
-            f"curl -fsSL https://raw.githubusercontent.com/{REPO}/main/install.sh | bash"
+            f"XTOOLS_CHANNEL='{channel}' curl -fsSL https://raw.githubusercontent.com/{REPO}/main/install.sh | XTOOLS_CHANNEL='{channel}' bash"
         ], check=False)

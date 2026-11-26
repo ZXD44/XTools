@@ -1,0 +1,6 @@
+{
+  "name": "agy-manager",
+  "desc": "AGY Multi-Account Switch, Quota Tracker & Profile Manager",
+  "entry": "main.py",
+  "runtime": "python"
+}
